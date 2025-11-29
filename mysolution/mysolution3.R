@@ -159,39 +159,78 @@ experiment <- function(g, method, multiplier, max_iter, runs = 100) {
   colMeans(mat)
 }
 
-# ================================================================
-# 5. UI
-# ================================================================
-
-ui <- page_sidebar(
-  title = "Information Diffusion – Independent Cascade",
-  sidebar = sidebar(
-    
-    sliderInput("mult", "Activation probability multiplier:",
-                min = 10, max = 200, step = 10, value = 100, post = "%"),
-    
-    sliderInput("iters", "Maximum iterations:",
-                min = 1, max = 50, value = 10),
-    
-    actionButton("run", "Run simulation", class = "btn-primary", width = "100%"),
-    
-    HTML("<hr><b>Strategies:</b>
-         <ul>
-           <li>Outdegree: most outgoing edges</li>
-           <li>Betweenness: bridge nodes</li>
-           <li>Closeness: central nodes</li>
-           <li>Random: baseline</li>
-           <li>PageRank: importance</li>
-         </ul>
-         <small>Initial share: 5% of nodes (≈9)<br>100 runs averaged</small>")
+ui <- navbarPage(
+  title = "Diffusion Simulation",
+  theme = bs_theme(
+    version = 5,
+    bootswatch = "minty",     # Całkowita zmiana stylu
+    primary = "#2c7fb8",
+    base_font = font_google("Inter")
   ),
   
-  plotOutput("plot", height = "600px")
+  tabPanel("Simulation",
+           
+           fluidPage(
+             br(),
+             
+             fluidRow(
+               column(
+                 width = 4,
+                 
+                 # ------ PANEL STEROWANIA W KARTACH ------
+                 card(
+                   full_screen = FALSE,
+                   card_header("Parameters"),
+                   card_body(
+                     sliderInput(
+                       "mult", "Activation probability multiplier:",
+                       min = 10, max = 200, step = 10, value = 100, post = "%"
+                     ),
+                     
+                     sliderInput(
+                       "iters", "Maximum iterations:",
+                       min = 1, max = 50, value = 10
+                     ),
+                     
+                     br(),
+                     actionButton("run", "Run simulation",
+                                  class = "btn btn-success w-100"),
+                     br(), br()
+                   )
+                 ),
+                 
+                 card(
+                   card_header("Strategies description"),
+                   card_body(
+                     tags$ul(
+                       tags$li("Outdegree –> nodes with many outgoing edges"),
+                       tags$li("Betweenness –> bridge nodes"),
+                       tags$li("Closeness –> central nodes"),
+                       tags$li("Random –> baseline"),
+                       tags$li("PageRank –> importance measure")
+                     ),
+                   )
+                 )
+               ),
+               
+               # ------ WYKRES W OSOBNEJ KARCIE ------
+               column(
+                 width = 8,
+                 card(
+                   full_screen = TRUE,
+                   card_header("Diffusion over iterations"),
+                   card_body(
+                     plotOutput("plot", height = "650px")
+                   )
+                 )
+               )
+             )
+           )
+  )
 )
 
-
 # ================================================================
-# 6. Server logic
+# 6. Server logic (unchanged)
 # ================================================================
 
 server <- function(input, output) {
@@ -225,22 +264,21 @@ server <- function(input, output) {
     s <- sim()
     
     methods <- c("Out-degree", "Betweenness", "Closeness", "Random", "PageRank")
-    cols <- c("#d73027", "#4575b4", "#66bd63", "#984ea3", "#fdae61")
+    cols <- c("#2c7fb8", "#d95f02", "#1b9e77", "#7570b3", "#e7298a")
     
-    plot(0:s$iters, s$results[[1]][1:(s$iters+1)], type = "l", lwd = 2,
+    plot(0:s$iters, s$results[[1]][1:(s$iters+1)], type = "l", lwd = 3,
          col = cols[1], ylim = c(0, max(unlist(s$results))),
          xlab = "Iteration", ylab = "New activations",
          main = paste0("Diffusion (×", s$mult, ") – ", round(s$time,1), "s"))
     
     for (i in 2:5) {
-      lines(0:s$iters, s$results[[i]][1:(s$iters+1)], lwd = 2, col = cols[i])
+      lines(0:s$iters, s$results[[i]][1:(s$iters+1)], lwd = 3, col = cols[i])
     }
     
-    legend("topright", legend = methods, col = cols, lwd = 2)
+    legend("topright", legend = methods, col = cols, lwd = 3)
     grid()
   })
 }
 
 shinyApp(ui, server)
-
 
